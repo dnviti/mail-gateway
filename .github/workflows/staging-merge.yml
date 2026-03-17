@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
+      - name: Lint with ruff
+        run: ruff check .
+
       - name: Run integration tests
         run: pytest --tb=short -q
 

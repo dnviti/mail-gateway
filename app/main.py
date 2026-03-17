@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 
 from app.api.admin import router as admin_router
@@ -11,7 +12,9 @@ from app.db.database import close_db, init_db
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    app.state.httpx_client = httpx.AsyncClient(timeout=30.0)
     yield
+    await app.state.httpx_client.aclose()
     await close_db()
 
 

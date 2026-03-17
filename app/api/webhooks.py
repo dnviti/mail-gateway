@@ -1,10 +1,12 @@
 import logging
 import time
 
-from fastapi import APIRouter, Header, HTTPException, Request, Depends
+import httpx
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
+from app.deps import get_httpx_client
 from app.middleware.idempotency import IdempotencyGuard
 from app.models.schemas import WebhookResponse
 from app.services.stripe_service import verify_webhook_signature
@@ -23,6 +25,7 @@ async def stripe_webhook(
     request: Request,
     stripe_signature: str = Header(alias="Stripe-Signature"),
     db: AsyncSession = Depends(get_db),
+    http_client: httpx.AsyncClient = Depends(get_httpx_client),
 ):
     payload = await request.body()
 
@@ -44,7 +47,7 @@ async def stripe_webhook(
     error_detail = None
 
     try:
-        result = await route_event(event, db)
+        result = await route_event(event, db, http_client=http_client)
 
         # Map result status for idempotency and audit
         status_map = {"processed": "processed", "error": "failed"}

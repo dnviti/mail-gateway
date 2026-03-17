@@ -1,12 +1,12 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.database import get_db
+from app.models.schemas import AuditLogListResponse, AuditLogResponse
 from app.services.audit_service import query_audit_log
 
 router = APIRouter()
@@ -28,7 +28,7 @@ async def verify_admin_api_key(
     return x_api_key
 
 
-@router.get("/audit-log")
+@router.get("/audit-log", response_model=AuditLogListResponse)
 async def get_audit_log(
     event_type: str | None = Query(default=None, description="Filter by event type"),
     customer_id: str | None = Query(default=None, description="Filter by customer ID"),
@@ -39,7 +39,7 @@ async def get_audit_log(
     offset: int = Query(default=0, ge=0, description="Number of entries to skip"),
     db: AsyncSession = Depends(get_db),
     _api_key: str = Depends(verify_admin_api_key),
-) -> list[dict[str, Any]]:
+) -> AuditLogListResponse:
     entries = await query_audit_log(
         db=db,
         event_type=event_type,
@@ -50,17 +50,18 @@ async def get_audit_log(
         limit=limit,
         offset=offset,
     )
-    return [
-        {
-            "id": entry.id,
-            "stripe_event_id": entry.stripe_event_id,
-            "event_type": entry.event_type,
-            "customer_id": entry.customer_id,
-            "payload": entry.payload,
-            "status": entry.status,
-            "error_detail": entry.error_detail,
-            "processing_ms": entry.processing_ms,
-            "created_at": entry.created_at.isoformat() if entry.created_at else None,
-        }
+    items = [
+        AuditLogResponse(
+            id=entry.id,
+            stripe_event_id=entry.stripe_event_id,
+            event_type=entry.event_type,
+            customer_id=entry.customer_id,
+            payload=entry.payload,
+            status=entry.status,
+            error_detail=entry.error_detail,
+            processing_ms=entry.processing_ms,
+            created_at=entry.created_at.isoformat() if entry.created_at else None,
+        )
         for entry in entries
     ]
+    return AuditLogListResponse(entries=items, count=len(items))

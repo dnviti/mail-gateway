@@ -1,6 +1,7 @@
 import logging
 from typing import Callable, Awaitable
 
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.stripe_service import extract_customer_data, is_first_subscription
@@ -25,8 +26,18 @@ def register_handler(event_type: str, handler: Callable[..., Awaitable[dict]]) -
     logger.debug("Registered handler for event type: %s", event_type)
 
 
-async def route_event(event: dict, db: AsyncSession) -> dict:
-    """Dispatch a Stripe event to its registered handler."""
+async def route_event(
+    event: dict,
+    db: AsyncSession,
+    *,
+    http_client: httpx.AsyncClient | None = None,
+) -> dict:
+    """Dispatch a Stripe event to its registered handler.
+
+    Args:
+        http_client: Optional shared httpx.AsyncClient forwarded to email
+                     sending functions for connection-pool reuse.
+    """
     event_type = event.get("type", "")
     handler = _handler_registry.get(event_type)
 
@@ -34,7 +45,7 @@ async def route_event(event: dict, db: AsyncSession) -> dict:
         logger.info("No handler registered for event type: %s", event_type)
         return {"status": "ignored", "message": f"Unhandled event type: {event_type}"}
 
-    return await handler(event, db)
+    return await handler(event, db, http_client=http_client)
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +53,9 @@ async def route_event(event: dict, db: AsyncSession) -> dict:
 # ---------------------------------------------------------------------------
 
 
-async def _handle_subscription_created(event: dict, db: AsyncSession) -> dict:
+async def _handle_subscription_created(
+    event: dict, db: AsyncSession, *, http_client: httpx.AsyncClient | None = None
+) -> dict:
     """Handle customer.subscription.created — send welcome email on first subscription."""
     customer_data = extract_customer_data(event)
     stripe_customer_id = customer_data.get("customer_id", "")
@@ -62,6 +75,7 @@ async def _handle_subscription_created(event: dict, db: AsyncSession) -> dict:
     email_sent = await send_welcome_email(
         to_email=customer.email,
         customer_name=customer.name or "Customer",
+        client=http_client,
     )
 
     if email_sent:
@@ -69,7 +83,9 @@ async def _handle_subscription_created(event: dict, db: AsyncSession) -> dict:
     return {"status": "error", "message": "Failed to send email"}
 
 
-async def _handle_subscription_deleted(event: dict, db: AsyncSession) -> dict:
+async def _handle_subscription_deleted(
+    event: dict, db: AsyncSession, *, http_client: httpx.AsyncClient | None = None
+) -> dict:
     """Handle customer.subscription.deleted — send cancellation confirmation."""
     customer_data = extract_customer_data(event)
     stripe_customer_id = customer_data.get("customer_id", "")
@@ -86,6 +102,7 @@ async def _handle_subscription_deleted(event: dict, db: AsyncSession) -> dict:
     email_sent = await send_cancellation_email(
         to_email=customer.email,
         customer_name=customer.name or "Customer",
+        client=http_client,
     )
 
     if email_sent:
@@ -93,7 +110,9 @@ async def _handle_subscription_deleted(event: dict, db: AsyncSession) -> dict:
     return {"status": "error", "message": "Failed to send cancellation email"}
 
 
-async def _handle_payment_failed(event: dict, db: AsyncSession) -> dict:
+async def _handle_payment_failed(
+    event: dict, db: AsyncSession, *, http_client: httpx.AsyncClient | None = None
+) -> dict:
     """Handle invoice.payment_failed — notify customer of payment failure."""
     data_object = event.get("data", {}).get("object", {})
     stripe_customer_id = data_object.get("customer", "")
@@ -110,6 +129,7 @@ async def _handle_payment_failed(event: dict, db: AsyncSession) -> dict:
     email_sent = await send_payment_failed_email(
         to_email=customer.email,
         customer_name=customer.name or "Customer",
+        client=http_client,
     )
 
     if email_sent:
@@ -117,7 +137,9 @@ async def _handle_payment_failed(event: dict, db: AsyncSession) -> dict:
     return {"status": "error", "message": "Failed to send payment failed email"}
 
 
-async def _handle_invoice_upcoming(event: dict, db: AsyncSession) -> dict:
+async def _handle_invoice_upcoming(
+    event: dict, db: AsyncSession, *, http_client: httpx.AsyncClient | None = None
+) -> dict:
     """Handle invoice.upcoming — send renewal reminder."""
     data_object = event.get("data", {}).get("object", {})
     stripe_customer_id = data_object.get("customer", "")
@@ -134,6 +156,7 @@ async def _handle_invoice_upcoming(event: dict, db: AsyncSession) -> dict:
     email_sent = await send_renewal_reminder_email(
         to_email=customer.email,
         customer_name=customer.name or "Customer",
+        client=http_client,
     )
 
     if email_sent:
@@ -141,7 +164,9 @@ async def _handle_invoice_upcoming(event: dict, db: AsyncSession) -> dict:
     return {"status": "error", "message": "Failed to send renewal reminder email"}
 
 
-async def _handle_subscription_updated(event: dict, db: AsyncSession) -> dict:
+async def _handle_subscription_updated(
+    event: dict, db: AsyncSession, *, http_client: httpx.AsyncClient | None = None
+) -> dict:
     """Handle customer.subscription.updated — send plan change confirmation."""
     customer_data = extract_customer_data(event)
     stripe_customer_id = customer_data.get("customer_id", "")
@@ -169,6 +194,7 @@ async def _handle_subscription_updated(event: dict, db: AsyncSession) -> dict:
         customer_name=customer.name or "Customer",
         old_plan=old_plan,
         new_plan=new_plan,
+        client=http_client,
     )
 
     if email_sent:

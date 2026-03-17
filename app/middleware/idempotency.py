@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 
 from sqlalchemy import update
@@ -8,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.webhook_event import WebhookEvent
 
 logger = logging.getLogger(__name__)
+
+# Stripe event IDs follow the pattern: evt_ followed by alphanumeric characters
+_STRIPE_EVENT_ID_PATTERN = re.compile(r"^evt_[A-Za-z0-9]+$")
 
 
 class IdempotencyGuard:
@@ -42,8 +46,8 @@ class IdempotencyGuard:
 
         Returns:
             A dict with status/message if the event was already processed
-            (caller should return this as the response), or None if the
-            event is new and should be processed.
+            or rejected (caller should return this as the response), or
+            None if the event is new and should be processed.
         """
         event_id = event.get("id")
         event_type = event.get("type", "unknown")
@@ -51,6 +55,18 @@ class IdempotencyGuard:
         if not event_id:
             logger.warning("Webhook event missing 'id' field, skipping idempotency check")
             return None
+
+        if not _STRIPE_EVENT_ID_PATTERN.match(event_id):
+            logger.warning(
+                "Event ID '%s' does not match expected Stripe format (evt_*), rejecting",
+                event_id,
+            )
+            # Truncate reflected value to avoid echoing large attacker-controlled input
+            safe_id = event_id[:80] if isinstance(event_id, str) else str(event_id)[:80]
+            return {
+                "status": "rejected",
+                "message": f"Invalid event ID format: {safe_id}",
+            }
 
         webhook_event = WebhookEvent(
             stripe_event_id=event_id,

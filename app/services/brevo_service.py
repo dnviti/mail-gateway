@@ -38,14 +38,27 @@ async def _send_email_request(payload: dict, headers: dict, client: httpx.AsyncC
     return False  # pragma: no cover
 
 
-async def _send_email_with_retry(to_email: str, to_name: str, subject: str, html_content: str, template_id: str) -> bool:
-    """Send an email via the Brevo API with retry support."""
+async def _send_email_with_retry(
+    to_email: str,
+    to_name: str,
+    subject: str,
+    html_content: str,
+    template_id: str,
+    client: httpx.AsyncClient | None = None,
+) -> bool:
+    """Send an email via the Brevo API with retry support.
+
+    Args:
+        client: Optional shared httpx.AsyncClient. If None, a temporary client
+                is created for the duration of the call (backward-compatible).
+    """
     if not settings.BREVO_API_KEY:
         logger.error("BREVO_API_KEY not configured")
         return False
 
+    sender_email = settings.sender_email
     payload = {
-        "sender": {"name": settings.APP_NAME, "email": f"noreply@{settings.APP_NAME}.com"},
+        "sender": {"name": settings.APP_NAME, "email": sender_email},
         "to": [{"email": to_email, "name": to_name}],
         "subject": subject,
         "htmlContent": html_content,
@@ -58,7 +71,11 @@ async def _send_email_with_retry(to_email: str, to_name: str, subject: str, html
     }
 
     logger.info("Sending '%s' email to %s (with retry)", template_id, to_email)
-    async with httpx.AsyncClient() as client:
+
+    owns_client = client is None
+    if owns_client:
+        client = httpx.AsyncClient(timeout=30.0)
+    try:
         result = await with_retry(
             _send_email_request,
             payload,
@@ -69,6 +86,9 @@ async def _send_email_with_retry(to_email: str, to_name: str, subject: str, html
             template_id=template_id,
             payload=payload,
         )
+    finally:
+        if owns_client:
+            await client.aclose()
 
     if result is True:
         logger.info("Email '%s' sent to %s", subject, to_email)
@@ -78,34 +98,34 @@ async def _send_email_with_retry(to_email: str, to_name: str, subject: str, html
     return False
 
 
-async def send_welcome_email(to_email: str, customer_name: str) -> bool:
+async def send_welcome_email(to_email: str, customer_name: str, client: httpx.AsyncClient | None = None) -> bool:
     """Send welcome email to a new subscriber."""
     html_content = _build_welcome_html(customer_name)
-    return await _send_email_with_retry(to_email, customer_name, "Welcome to our service!", html_content, "welcome")
+    return await _send_email_with_retry(to_email, customer_name, "Welcome to our service!", html_content, "welcome", client=client)
 
 
-async def send_cancellation_email(to_email: str, customer_name: str) -> bool:
+async def send_cancellation_email(to_email: str, customer_name: str, client: httpx.AsyncClient | None = None) -> bool:
     """Send cancellation confirmation email."""
     html_content = _build_cancellation_html(customer_name)
-    return await _send_email_with_retry(to_email, customer_name, "Subscription Cancelled", html_content, "cancellation")
+    return await _send_email_with_retry(to_email, customer_name, "Subscription Cancelled", html_content, "cancellation", client=client)
 
 
-async def send_payment_failed_email(to_email: str, customer_name: str) -> bool:
+async def send_payment_failed_email(to_email: str, customer_name: str, client: httpx.AsyncClient | None = None) -> bool:
     """Send payment failure notification email."""
     html_content = _build_payment_failed_html(customer_name)
-    return await _send_email_with_retry(to_email, customer_name, "Payment Failed — Action Required", html_content, "payment_failed")
+    return await _send_email_with_retry(to_email, customer_name, "Payment Failed — Action Required", html_content, "payment_failed", client=client)
 
 
-async def send_renewal_reminder_email(to_email: str, customer_name: str) -> bool:
+async def send_renewal_reminder_email(to_email: str, customer_name: str, client: httpx.AsyncClient | None = None) -> bool:
     """Send subscription renewal reminder email."""
     html_content = _build_renewal_reminder_html(customer_name)
-    return await _send_email_with_retry(to_email, customer_name, "Your Subscription Renewal is Coming Up", html_content, "renewal_reminder")
+    return await _send_email_with_retry(to_email, customer_name, "Your Subscription Renewal is Coming Up", html_content, "renewal_reminder", client=client)
 
 
-async def send_plan_change_email(to_email: str, customer_name: str, old_plan: str, new_plan: str) -> bool:
+async def send_plan_change_email(to_email: str, customer_name: str, old_plan: str, new_plan: str, client: httpx.AsyncClient | None = None) -> bool:
     """Send plan change confirmation email."""
     html_content = _build_plan_change_html(customer_name, old_plan, new_plan)
-    return await _send_email_with_retry(to_email, customer_name, "Your Plan Has Been Changed", html_content, "plan_change")
+    return await _send_email_with_retry(to_email, customer_name, "Your Plan Has Been Changed", html_content, "plan_change", client=client)
 
 
 # ---------------------------------------------------------------------------

@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # When not set, the sender email is derived as noreply@{APP_NAME}.com.
     SENDER_EMAIL: str = ""
 
+    # PII redaction — enabled by default for GDPR compliance.
+    # Set to false only in development/debugging environments.
+    PII_REDACTION_ENABLED: bool = True
+    # Salt for PII correlation hashes.  Set a unique, secret value per
+    # deployment to prevent rainbow-table reversal of hashed PII.
+    PII_HASH_SALT: str = ""
+
     # Retention / TTL policy
     WEBHOOK_EVENTS_TTL_DAYS: int = 30
     DEAD_LETTER_TTL_DAYS: int = 90

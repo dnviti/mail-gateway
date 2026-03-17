@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
+from app.utils.pii_redactor import redact_payload
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ async def record_event(
             stripe_event_id=stripe_event_id,
             event_type=event_type,
             customer_id=customer_id,
-            payload=payload,
+            payload=redact_payload(payload),
             status=status,
             error_detail=error_detail,
             processing_ms=processing_ms,

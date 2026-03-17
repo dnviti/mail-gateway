@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 
 from app.config import settings
 from app.db.database import async_session
@@ -16,6 +16,23 @@ from app.models.dead_letter import DeadLetter
 from app.models.webhook_event import WebhookEvent
 
 logger = logging.getLogger(__name__)
+
+# Minimum TTL in days to prevent accidental deletion of all rows
+_MIN_TTL_DAYS = 1
+
+
+def _validate_ttl(ttl_days: int, table_name: str) -> bool:
+    """Return True if the TTL value is safe, False otherwise."""
+    if ttl_days < _MIN_TTL_DAYS:
+        logger.warning(
+            "Retention: %s TTL=%d days is below minimum (%d). "
+            "Skipping cleanup to prevent accidental data loss.",
+            table_name,
+            ttl_days,
+            _MIN_TTL_DAYS,
+        )
+        return False
+    return True
 
 
 async def cleanup_webhook_events(batch_size: int | None = None) -> int:
@@ -25,6 +42,8 @@ async def cleanup_webhook_events(batch_size: int | None = None) -> int:
     contention.  Returns the total number of rows deleted.
     """
     ttl_days = settings.WEBHOOK_EVENTS_TTL_DAYS
+    if not _validate_ttl(ttl_days, "webhook_events"):
+        return 0
     batch = batch_size or settings.RETENTION_BATCH_SIZE
     cutoff = datetime.now(timezone.utc) - timedelta(days=ttl_days)
 
@@ -79,6 +98,8 @@ async def cleanup_dead_letters(batch_size: int | None = None) -> int:
     contention.  Returns the total number of rows deleted.
     """
     ttl_days = settings.DEAD_LETTER_TTL_DAYS
+    if not _validate_ttl(ttl_days, "dead_letter_emails"):
+        return 0
     batch = batch_size or settings.RETENTION_BATCH_SIZE
     cutoff = datetime.now(timezone.utc) - timedelta(days=ttl_days)
 

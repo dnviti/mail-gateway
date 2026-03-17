@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     DEAD_LETTER_TTL_DAYS: int = 90
     RETENTION_CLEANUP_INTERVAL_HOURS: int = 24
     RETENTION_BATCH_SIZE: int = 1000
-    RETENTION_HARD_DELETE: bool = True
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

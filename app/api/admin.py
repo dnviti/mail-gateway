@@ -1,11 +1,12 @@
 from datetime import datetime
 from enum import Enum
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.database import get_db
+from app.middleware.rate_limiter import limiter, get_admin_rate_limit
 from app.models.schemas import AuditLogListResponse, AuditLogResponse
 from app.services.audit_service import query_audit_log
 
@@ -29,7 +30,9 @@ async def verify_admin_api_key(
 
 
 @router.get("/audit-log", response_model=AuditLogListResponse)
+@limiter.limit(get_admin_rate_limit)
 async def get_audit_log(
+    request: Request,
     event_type: str | None = Query(default=None, description="Filter by event type"),
     customer_id: str | None = Query(default=None, description="Filter by customer ID"),
     date_from: datetime | None = Query(default=None, description="Filter from date (ISO 8601)"),

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
 from app.deps import get_httpx_client
 from app.middleware.idempotency import IdempotencyGuard
+from app.middleware.rate_limiter import limiter, get_webhook_rate_limit
 from app.models.schemas import WebhookResponse
 from app.services.stripe_service import verify_webhook_signature
 from app.services.event_router import route_event
@@ -21,6 +22,7 @@ MAX_ERROR_DETAIL_LENGTH = 500
 
 
 @router.post("/stripe", response_model=WebhookResponse)
+@limiter.limit(get_webhook_rate_limit)
 async def stripe_webhook(
     request: Request,
     stripe_signature: str = Header(alias="Stripe-Signature"),

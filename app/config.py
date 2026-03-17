@@ -1,4 +1,9 @@
+import re
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
+
+_RATE_LIMIT_PATTERN = re.compile(r"^\d+/(second|minute|hour|day)$")
 
 
 class Settings(BaseSettings):
@@ -14,6 +19,16 @@ class Settings(BaseSettings):
     # Rate limiting (requests per minute)
     RATE_LIMIT_ADMIN: str = "60/minute"
     RATE_LIMIT_WEBHOOK: str = "100/minute"
+
+    @field_validator("RATE_LIMIT_ADMIN", "RATE_LIMIT_WEBHOOK")
+    @classmethod
+    def validate_rate_limit_format(cls, v: str) -> str:
+        if not _RATE_LIMIT_PATTERN.match(v):
+            raise ValueError(
+                f"Invalid rate limit format '{v}'. "
+                "Expected '<number>/<second|minute|hour|day>' (e.g. '60/minute')."
+            )
+        return v
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

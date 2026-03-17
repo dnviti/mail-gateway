@@ -25,4 +25,5 @@ class DeadLetter(Base):
 
     __table_args__ = (
         Index("ix_dead_letter_emails_recipient", "recipient_email"),
+        Index("ix_dead_letter_emails_first_failed_at", "first_failed_at"),
     )

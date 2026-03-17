@@ -1,0 +1,405 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-03-17T15:31:42.624960Z",
+  "sections": [
+    {
+      "name": "index",
+      "file": "index.md",
+      "source_files": [
+        {
+          "path": "app/main.py",
+          "hash": "b4a4e2ea07df276edee846d186f81778bf4fc5434ec77b3a7512fa399a034892"
+        },
+        {
+          "path": "app/config.py",
+          "hash": "cc82bd3d7c03a7ad05d7859110da0ac750023283dd48ef4560211f7f5fc6903f"
+        },
+        {
+          "path": "pyproject.toml",
+          "hash": "e9be925cf661134c0f81bf4010576d45fa830f7d477c40cc907676616e6eac98"
+        },
+        {
+          "path": "CLAUDE.md",
+          "hash": "0f8ee7a567dd0a9216f608a6fbeea1f3a956d0d85050ddd76fe67e4b7d56164f"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.622537Z"
+    },
+    {
+      "name": "architecture",
+      "file": "architecture.md",
+      "source_files": [
+        {
+          "path": "app/main.py",
+          "hash": "b4a4e2ea07df276edee846d186f81778bf4fc5434ec77b3a7512fa399a034892"
+        },
+        {
+          "path": "app/config.py",
+          "hash": "cc82bd3d7c03a7ad05d7859110da0ac750023283dd48ef4560211f7f5fc6903f"
+        },
+        {
+          "path": "app/deps.py",
+          "hash": "3c0dbd96512cf1c220f038d7d6d361e1e3c24d9a810c4a9288db85ce80d78ab5"
+        },
+        {
+          "path": "app/api/webhooks.py",
+          "hash": "ba861cc536f19dee5c12c5e5ec2a1fa43ab8ca5eda83459faaf214ba9f927489"
+        },
+        {
+          "path": "app/api/admin.py",
+          "hash": "62f61a40d36f8969f748a9e7f6cc9dd3935df1c1817ea3d830caf88771b3ddeb"
+        },
+        {
+          "path": "app/db/database.py",
+          "hash": "a356df1c3037ea355c6475d0dd6b2bdb1c10eb097636c43a711afa27820c9123"
+        },
+        {
+          "path": "app/middleware/idempotency.py",
+          "hash": "fd605f810244bd05e4a48de8956f01ec85bb100ce41f0b48677d10f85cb885b9"
+        },
+        {
+          "path": "app/middleware/rate_limiter.py",
+          "hash": "99394df1f88f17563a4ce8a1211891737d60cae77f1e2f40ca44dab7cf1008bf"
+        },
+        {
+          "path": "app/services/event_router.py",
+          "hash": "2924130cdd19052a961b351e594861e98a2a9e51e021742d11d5345daea7f8f4"
+        },
+        {
+          "path": "app/services/stripe_service.py",
+          "hash": "055c758f8977a0af6c72aa442d27b4cf8721235e4c3e97b93f43c57b103743cf"
+        },
+        {
+          "path": "app/services/brevo_service.py",
+          "hash": "e307261596882203bc38fcef94c7b04e8aa49aaef7f6be591bf9b1a0e89d4fc6"
+        },
+        {
+          "path": "app/services/customer_service.py",
+          "hash": "887f28c8a8b1c3a8196d52790448feee96eb1a9c5060cd9be7a8b05b97cdb6d4"
+        },
+        {
+          "path": "app/services/audit_service.py",
+          "hash": "3f883f06d583c736889084b4d7375bd12f56930639a7bf5c42198a7c364f4657"
+        },
+        {
+          "path": "app/services/retry_service.py",
+          "hash": "d824fb0f4b365714f77152af0df20318f8040ceddd25e9be8ce48ceffa9b7f29"
+        },
+        {
+          "path": "app/services/retention_service.py",
+          "hash": "5595955a6e8fc459b8cd81a22069b6cb4788e90f6a962f58174791cb562daf6b"
+        },
+        {
+          "path": "app/utils/pii_redactor.py",
+          "hash": "8399daad599b3c4e9694c839761266f4be54563055c1338ae186dc5b9ba9f65d"
+        },
+        {
+          "path": "app/models/customer.py",
+          "hash": "be636e60c8a1fe4d5a17f8c9a22816cdda50b950eafb9639bc749cc8ffef1975"
+        },
+        {
+          "path": "app/models/webhook_event.py",
+          "hash": "184b6a79ddac626cdf9cc385d7caeb1ba569ba419a45d20c0c0289c85f9e9eff"
+        },
+        {
+          "path": "app/models/audit_log.py",
+          "hash": "f34facbbf30bf8a81aae6a9c49ee9d6af6f668417e4bb802b0bdab8e8097583a"
+        },
+        {
+          "path": "app/models/dead_letter.py",
+          "hash": "cef5c2dd5f27e178d4441e7eb83058503a97e9a12b4acb4210ce97a2cc2b8bca"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.623147Z"
+    },
+    {
+      "name": "getting-started",
+      "file": "getting-started.md",
+      "source_files": [
+        {
+          "path": "pyproject.toml",
+          "hash": "e9be925cf661134c0f81bf4010576d45fa830f7d477c40cc907676616e6eac98"
+        },
+        {
+          "path": "requirements.txt",
+          "hash": "2d41779944baae1f864f2c3a8a7b6a7fd79a750e2e376633f3ebfe21d0b27d73"
+        },
+        {
+          "path": "requirements-dev.txt",
+          "hash": "c28d234cc1966db75b3a8d5323bd985edaa7a36d5d5eba98b887a25720fe510c"
+        },
+        {
+          "path": ".env.example",
+          "hash": "f442aff3d8cd6ca12e6f4127c8548c7d8621261c5692cf89b7a1f46a8947c442"
+        },
+        {
+          "path": "app/main.py",
+          "hash": "b4a4e2ea07df276edee846d186f81778bf4fc5434ec77b3a7512fa399a034892"
+        },
+        {
+          "path": "app/config.py",
+          "hash": "cc82bd3d7c03a7ad05d7859110da0ac750023283dd48ef4560211f7f5fc6903f"
+        },
+        {
+          "path": "app/db/database.py",
+          "hash": "a356df1c3037ea355c6475d0dd6b2bdb1c10eb097636c43a711afa27820c9123"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.623369Z"
+    },
+    {
+      "name": "configuration",
+      "file": "configuration.md",
+      "source_files": [
+        {
+          "path": "app/config.py",
+          "hash": "cc82bd3d7c03a7ad05d7859110da0ac750023283dd48ef4560211f7f5fc6903f"
+        },
+        {
+          "path": ".env.example",
+          "hash": "f442aff3d8cd6ca12e6f4127c8548c7d8621261c5692cf89b7a1f46a8947c442"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.623433Z"
+    },
+    {
+      "name": "api-reference",
+      "file": "api-reference.md",
+      "source_files": [
+        {
+          "path": "app/api/webhooks.py",
+          "hash": "ba861cc536f19dee5c12c5e5ec2a1fa43ab8ca5eda83459faaf214ba9f927489"
+        },
+        {
+          "path": "app/api/admin.py",
+          "hash": "62f61a40d36f8969f748a9e7f6cc9dd3935df1c1817ea3d830caf88771b3ddeb"
+        },
+        {
+          "path": "app/main.py",
+          "hash": "b4a4e2ea07df276edee846d186f81778bf4fc5434ec77b3a7512fa399a034892"
+        },
+        {
+          "path": "app/models/schemas.py",
+          "hash": "54f2984203ea6491ce057de072a01a8f3dd0b26ebe808c7e7829af4aae8f1b17"
+        },
+        {
+          "path": "app/middleware/rate_limiter.py",
+          "hash": "99394df1f88f17563a4ce8a1211891737d60cae77f1e2f40ca44dab7cf1008bf"
+        },
+        {
+          "path": "app/middleware/idempotency.py",
+          "hash": "fd605f810244bd05e4a48de8956f01ec85bb100ce41f0b48677d10f85cb885b9"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.623612Z"
+    },
+    {
+      "name": "deployment",
+      "file": "deployment.md",
+      "source_files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "hash": "b552ed0b583cd6a96c4fd79388bc222f95dcdba61d5f6f95623ce5ba6bcca8fb"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "hash": "b62484cba9107518a2441705d09eda38f2dbfe1b060eccdbc8c92285244f9b37"
+        },
+        {
+          "path": ".github/workflows/staging-merge.yml",
+          "hash": "3f3517260d54097bf80bf08c6b664e0489cdbed8bb08c18154b19c108c45231d"
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "hash": "8a7c4002ac50564ccb6536a98e282885f9676555b2e269c5dcbde309c8633b25"
+        },
+        {
+          "path": ".github/workflows/status-guard.yml",
+          "hash": "a5c462db1da073b7185b93c0502d3d7aacf9c8e4f362482955d954dea1b97f93"
+        },
+        {
+          "path": ".github/workflows/issue-triage.yml",
+          "hash": "51947b9bc9869490f8efd7c650c24344fa688002de8ac175133a9e84bd71f7d4"
+        },
+        {
+          "path": "pyproject.toml",
+          "hash": "e9be925cf661134c0f81bf4010576d45fa830f7d477c40cc907676616e6eac98"
+        },
+        {
+          "path": "requirements.txt",
+          "hash": "2d41779944baae1f864f2c3a8a7b6a7fd79a750e2e376633f3ebfe21d0b27d73"
+        },
+        {
+          "path": "app/main.py",
+          "hash": "b4a4e2ea07df276edee846d186f81778bf4fc5434ec77b3a7512fa399a034892"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.623885Z"
+    },
+    {
+      "name": "development",
+      "file": "development.md",
+      "source_files": [
+        {
+          "path": "CLAUDE.md",
+          "hash": "0f8ee7a567dd0a9216f608a6fbeea1f3a956d0d85050ddd76fe67e4b7d56164f"
+        },
+        {
+          "path": "pyproject.toml",
+          "hash": "e9be925cf661134c0f81bf4010576d45fa830f7d477c40cc907676616e6eac98"
+        },
+        {
+          "path": "requirements-dev.txt",
+          "hash": "c28d234cc1966db75b3a8d5323bd985edaa7a36d5d5eba98b887a25720fe510c"
+        },
+        {
+          "path": "tests/conftest.py",
+          "hash": "c2aa425d5ba08ab4f3806f255e29a3fe501d49b52e17c64de10f02974b673a37"
+        },
+        {
+          "path": "tests/test_webhooks.py",
+          "hash": "3b379db3657ef9860c5c6d4d3b996b35b88caee971a300311e83ac9d4dd7b620"
+        },
+        {
+          "path": "tests/test_pii_redactor.py",
+          "hash": "0407574b6aa09f1d22f7dc95d4331dc281b9d8e2784d38779a3c4b127ce0c3b2"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.624067Z"
+    },
+    {
+      "name": "troubleshooting",
+      "file": "troubleshooting.md",
+      "source_files": [
+        {
+          "path": "app/api/webhooks.py",
+          "hash": "ba861cc536f19dee5c12c5e5ec2a1fa43ab8ca5eda83459faaf214ba9f927489"
+        },
+        {
+          "path": "app/api/admin.py",
+          "hash": "62f61a40d36f8969f748a9e7f6cc9dd3935df1c1817ea3d830caf88771b3ddeb"
+        },
+        {
+          "path": "app/config.py",
+          "hash": "cc82bd3d7c03a7ad05d7859110da0ac750023283dd48ef4560211f7f5fc6903f"
+        },
+        {
+          "path": "app/middleware/idempotency.py",
+          "hash": "fd605f810244bd05e4a48de8956f01ec85bb100ce41f0b48677d10f85cb885b9"
+        },
+        {
+          "path": "app/services/brevo_service.py",
+          "hash": "e307261596882203bc38fcef94c7b04e8aa49aaef7f6be591bf9b1a0e89d4fc6"
+        },
+        {
+          "path": "app/services/retry_service.py",
+          "hash": "d824fb0f4b365714f77152af0df20318f8040ceddd25e9be8ce48ceffa9b7f29"
+        },
+        {
+          "path": "app/services/retention_service.py",
+          "hash": "5595955a6e8fc459b8cd81a22069b6cb4788e90f6a962f58174791cb562daf6b"
+        },
+        {
+          "path": "app/db/database.py",
+          "hash": "a356df1c3037ea355c6475d0dd6b2bdb1c10eb097636c43a711afa27820c9123"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.624323Z"
+    },
+    {
+      "name": "llm-context",
+      "file": "llm-context.md",
+      "source_files": [
+        {
+          "path": "app/main.py",
+          "hash": "b4a4e2ea07df276edee846d186f81778bf4fc5434ec77b3a7512fa399a034892"
+        },
+        {
+          "path": "app/config.py",
+          "hash": "cc82bd3d7c03a7ad05d7859110da0ac750023283dd48ef4560211f7f5fc6903f"
+        },
+        {
+          "path": "app/deps.py",
+          "hash": "3c0dbd96512cf1c220f038d7d6d361e1e3c24d9a810c4a9288db85ce80d78ab5"
+        },
+        {
+          "path": "app/api/webhooks.py",
+          "hash": "ba861cc536f19dee5c12c5e5ec2a1fa43ab8ca5eda83459faaf214ba9f927489"
+        },
+        {
+          "path": "app/api/admin.py",
+          "hash": "62f61a40d36f8969f748a9e7f6cc9dd3935df1c1817ea3d830caf88771b3ddeb"
+        },
+        {
+          "path": "app/db/database.py",
+          "hash": "a356df1c3037ea355c6475d0dd6b2bdb1c10eb097636c43a711afa27820c9123"
+        },
+        {
+          "path": "app/middleware/idempotency.py",
+          "hash": "fd605f810244bd05e4a48de8956f01ec85bb100ce41f0b48677d10f85cb885b9"
+        },
+        {
+          "path": "app/middleware/rate_limiter.py",
+          "hash": "99394df1f88f17563a4ce8a1211891737d60cae77f1e2f40ca44dab7cf1008bf"
+        },
+        {
+          "path": "app/services/event_router.py",
+          "hash": "2924130cdd19052a961b351e594861e98a2a9e51e021742d11d5345daea7f8f4"
+        },
+        {
+          "path": "app/services/stripe_service.py",
+          "hash": "055c758f8977a0af6c72aa442d27b4cf8721235e4c3e97b93f43c57b103743cf"
+        },
+        {
+          "path": "app/services/brevo_service.py",
+          "hash": "e307261596882203bc38fcef94c7b04e8aa49aaef7f6be591bf9b1a0e89d4fc6"
+        },
+        {
+          "path": "app/services/customer_service.py",
+          "hash": "887f28c8a8b1c3a8196d52790448feee96eb1a9c5060cd9be7a8b05b97cdb6d4"
+        },
+        {
+          "path": "app/services/audit_service.py",
+          "hash": "3f883f06d583c736889084b4d7375bd12f56930639a7bf5c42198a7c364f4657"
+        },
+        {
+          "path": "app/services/retry_service.py",
+          "hash": "d824fb0f4b365714f77152af0df20318f8040ceddd25e9be8ce48ceffa9b7f29"
+        },
+        {
+          "path": "app/services/retention_service.py",
+          "hash": "5595955a6e8fc459b8cd81a22069b6cb4788e90f6a962f58174791cb562daf6b"
+        },
+        {
+          "path": "app/utils/pii_redactor.py",
+          "hash": "8399daad599b3c4e9694c839761266f4be54563055c1338ae186dc5b9ba9f65d"
+        },
+        {
+          "path": "app/models/customer.py",
+          "hash": "be636e60c8a1fe4d5a17f8c9a22816cdda50b950eafb9639bc749cc8ffef1975"
+        },
+        {
+          "path": "app/models/webhook_event.py",
+          "hash": "184b6a79ddac626cdf9cc385d7caeb1ba569ba419a45d20c0c0289c85f9e9eff"
+        },
+        {
+          "path": "app/models/audit_log.py",
+          "hash": "f34facbbf30bf8a81aae6a9c49ee9d6af6f668417e4bb802b0bdab8e8097583a"
+        },
+        {
+          "path": "app/models/dead_letter.py",
+          "hash": "cef5c2dd5f27e178d4441e7eb83058503a97e9a12b4acb4210ce97a2cc2b8bca"
+        },
+        {
+          "path": "app/models/schemas.py",
+          "hash": "54f2984203ea6491ce057de072a01a8f3dd0b26ebe808c7e7829af4aae8f1b17"
+        },
+        {
+          "path": "pyproject.toml",
+          "hash": "e9be925cf661134c0f81bf4010576d45fa830f7d477c40cc907676616e6eac98"
+        }
+      ],
+      "generated_at": "2026-03-17T15:31:42.624955Z"
+    }
+  ]
+}

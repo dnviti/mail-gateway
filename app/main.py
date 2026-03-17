@@ -2,6 +2,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    app.state.httpx_client = httpx.AsyncClient(timeout=30.0)
 
     # Start background retention/TTL cleanup task
     retention_task = asyncio.create_task(retention_loop())
@@ -33,6 +35,7 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         logger.info("Retention background task stopped")
 
+    await app.state.httpx_client.aclose()
     await close_db()
 
 

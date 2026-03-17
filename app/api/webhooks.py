@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 
@@ -16,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+MAX_ERROR_DETAIL_LENGTH = 500
+
 
 @router.post("/stripe", response_model=WebhookResponse)
 async def stripe_webhook(
@@ -31,12 +32,6 @@ async def stripe_webhook(
 
     event_type = event.get("type", "")
     stripe_event_id = event.get("id", "")
-
-    # Parse payload for audit storage
-    try:
-        payload_dict = json.loads(payload) if isinstance(payload, bytes) else payload
-    except Exception:
-        payload_dict = None
 
     start_time = time.monotonic()
     status = "processed"
@@ -83,11 +78,10 @@ async def stripe_webhook(
 
     except Exception as exc:
         status = "failed"
-        error_detail = str(exc)
+        error_detail = f"{type(exc).__name__}: {str(exc)}"[:MAX_ERROR_DETAIL_LENGTH]
         raise
 
     finally:
-        # Record audit log entry — must never block email delivery
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
         try:
             await audit_service.record_event(
@@ -95,10 +89,10 @@ async def stripe_webhook(
                 stripe_event_id=stripe_event_id,
                 event_type=event_type,
                 customer_id=customer_id,
-                payload=payload_dict,
+                payload=event,
                 status=status,
                 error_detail=error_detail,
                 processing_ms=elapsed_ms,
             )
         except Exception:
-            logger.exception("Audit logging failed for event %s", stripe_event_id)
+            logger.exception("Audit logging failed for event %%s", stripe_event_id)

@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str = ""
     DATABASE_URL: str = "postgresql+asyncpg://localhost:5432/mail_gateway"
 
+    # Rate limiting (requests per minute)
+    RATE_LIMIT_ADMIN: str = "60/minute"
+    RATE_LIMIT_WEBHOOK: str = "100/minute"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

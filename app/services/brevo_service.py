@@ -5,6 +5,7 @@ import httpx
 
 from app.config import settings
 from app.services.retry_service import RetryConfig, with_retry
+from app.utils.pii_redactor import redact_email
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ async def _send_email_with_retry(to_email: str, to_name: str, subject: str, html
         "Accept": "application/json",
     }
 
-    logger.info("Sending '%s' email to %s (with retry)", template_id, to_email)
+    logger.info("Sending '%s' email to %s (with retry)", template_id, redact_email(to_email))
     async with httpx.AsyncClient() as client:
         result = await with_retry(
             _send_email_request,
@@ -71,10 +72,10 @@ async def _send_email_with_retry(to_email: str, to_name: str, subject: str, html
         )
 
     if result is True:
-        logger.info("Email '%s' sent to %s", subject, to_email)
+        logger.info("Email '%s' sent to %s", subject, redact_email(to_email))
         return True
 
-    logger.error("Email '%s' delivery failed permanently for %s", template_id, to_email)
+    logger.error("Email '%s' delivery failed permanently for %s", template_id, redact_email(to_email))
     return False
 
 

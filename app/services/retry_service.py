@@ -8,6 +8,7 @@ import httpx
 
 from app.db.database import async_session
 from app.models.dead_letter import DeadLetter
+from app.utils.pii_redactor import redact_email, redact_payload
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ async def _record_dead_letter(
             dead_letter = DeadLetter(
                 recipient_email=recipient_email,
                 template_id=template_id,
-                payload=payload,
+                payload=redact_payload(payload),
                 error_message=error_message,
                 attempts=attempts,
                 first_failed_at=first_failed_at,
@@ -78,11 +79,11 @@ async def _record_dead_letter(
             await session.commit()
             logger.info(
                 "Recorded dead letter for %s after %d attempt(s)",
-                recipient_email,
+                redact_email(recipient_email),
                 attempts,
             )
     except Exception:
-        logger.exception("Failed to record dead letter for %s", recipient_email)
+        logger.exception("Failed to record dead letter for %s", redact_email(recipient_email))
 
 
 async def with_retry(
@@ -128,7 +129,7 @@ async def with_retry(
                 logger.error(
                     "Permanent failure on attempt %d for %s: %s",
                     attempt + 1,
-                    recipient_email,
+                    redact_email(recipient_email),
                     exc,
                 )
                 break
@@ -139,7 +140,7 @@ async def with_retry(
                     "Transient failure on attempt %d/%d for %s: %s — retrying in %.2fs",
                     attempt + 1,
                     config.max_retries + 1,
-                    recipient_email,
+                    redact_email(recipient_email),
                     exc,
                     delay,
                 )
@@ -148,7 +149,7 @@ async def with_retry(
                 logger.error(
                     "All %d retries exhausted for %s: %s",
                     config.max_retries + 1,
-                    recipient_email,
+                    redact_email(recipient_email),
                     exc,
                 )
 

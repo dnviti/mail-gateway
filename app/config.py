@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str = ""
     DATABASE_URL: str = "postgresql+asyncpg://localhost:5432/mail_gateway"
 
+    # PII redaction — enabled by default for GDPR compliance.
+    # Set to false only in development/debugging environments.
+    PII_REDACTION_ENABLED: bool = True
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -6,12 +8,28 @@ from app.api.admin import router as admin_router
 from app.api.webhooks import router as webhooks_router
 from app.config import settings
 from app.db.database import close_db, init_db
+from app.services.retention_service import retention_loop
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+
+    # Start background retention/TTL cleanup task
+    retention_task = asyncio.create_task(retention_loop())
+    logger.info("Retention background task started")
+
     yield
+
+    # Gracefully cancel the retention task on shutdown
+    retention_task.cancel()
+    try:
+        await retention_task
+    except asyncio.CancelledError:
+        logger.info("Retention background task stopped")
+
     await close_db()
 
 

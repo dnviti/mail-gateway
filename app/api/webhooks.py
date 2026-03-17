@@ -1,4 +1,6 @@
+import json
 import logging
+import time
 
 from fastapi import APIRouter, Header, HTTPException, Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +10,7 @@ from app.models.schemas import WebhookResponse
 from app.services.stripe_service import verify_webhook_signature, extract_customer_data, is_first_subscription
 from app.services.customer_service import get_customer_by_stripe_id
 from app.services.brevo_service import send_welcome_email
+from app.services import audit_service
 
 logger = logging.getLogger(__name__)
 
@@ -27,30 +30,75 @@ async def stripe_webhook(
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
     event_type = event.get("type", "")
+    stripe_event_id = event.get("id", "")
 
-    if event_type == "customer.subscription.created":
-        customer_data = extract_customer_data(event)
-        stripe_customer_id = customer_data.get("customer_id", "")
+    # Parse payload for audit storage
+    try:
+        payload_dict = json.loads(payload) if isinstance(payload, bytes) else payload
+    except Exception:
+        payload_dict = None
 
-        if not stripe_customer_id:
-            logger.warning("No customer ID in subscription event")
-            return WebhookResponse(status="ignored", message="No customer ID")
+    start_time = time.monotonic()
+    status = "processed"
+    error_detail = None
+    customer_id = None
 
-        if not await is_first_subscription(stripe_customer_id, event):
-            return WebhookResponse(status="ignored", message="Not a first subscription")
+    try:
+        if event_type == "customer.subscription.created":
+            customer_data = extract_customer_data(event)
+            stripe_customer_id = customer_data.get("customer_id", "")
+            customer_id = stripe_customer_id or None
 
-        customer = await get_customer_by_stripe_id(db, stripe_customer_id)
-        if customer is None:
-            logger.warning(f"Customer not found in DB: {stripe_customer_id}")
-            return WebhookResponse(status="error", message="Customer not found")
+            if not stripe_customer_id:
+                logger.warning("No customer ID in subscription event")
+                status = "skipped"
+                return WebhookResponse(status="ignored", message="No customer ID")
 
-        email_sent = await send_welcome_email(
-            to_email=customer.email,
-            customer_name=customer.name or "Customer",
-        )
+            if not await is_first_subscription(stripe_customer_id, event):
+                status = "skipped"
+                return WebhookResponse(status="ignored", message="Not a first subscription")
 
-        if email_sent:
-            return WebhookResponse(status="processed", message="Welcome email sent")
-        return WebhookResponse(status="error", message="Failed to send email")
+            customer = await get_customer_by_stripe_id(db, stripe_customer_id)
+            if customer is None:
+                logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+                status = "failed"
+                error_detail = f"Customer not found in DB: {stripe_customer_id}"
+                return WebhookResponse(status="error", message="Customer not found")
 
-    return WebhookResponse(status="ignored", message=f"Unhandled event type: {event_type}")
+            email_sent = await send_welcome_email(
+                to_email=customer.email,
+                customer_name=customer.name or "Customer",
+            )
+
+            if email_sent:
+                status = "processed"
+                return WebhookResponse(status="processed", message="Welcome email sent")
+
+            status = "failed"
+            error_detail = "Failed to send welcome email"
+            return WebhookResponse(status="error", message="Failed to send email")
+
+        status = "skipped"
+        return WebhookResponse(status="ignored", message=f"Unhandled event type: {event_type}")
+
+    except Exception as exc:
+        status = "failed"
+        error_detail = str(exc)
+        raise
+
+    finally:
+        # Record audit log entry — must never block email delivery
+        elapsed_ms = int((time.monotonic() - start_time) * 1000)
+        try:
+            await audit_service.record_event(
+                db=db,
+                stripe_event_id=stripe_event_id,
+                event_type=event_type,
+                customer_id=customer_id,
+                payload=payload_dict,
+                status=status,
+                error_detail=error_detail,
+                processing_ms=elapsed_ms,
+            )
+        except Exception:
+            logger.exception("Audit logging failed for event %s", stripe_event_id)

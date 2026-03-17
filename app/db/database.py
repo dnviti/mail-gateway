@@ -13,6 +13,7 @@ async def get_db():
 
 async def init_db():
     from app.models.customer import Base
+    import app.models.audit_log  # noqa: F401 — ensure AuditLog table is registered
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

@@ -22,7 +22,7 @@ _handler_registry: dict[str, Callable[..., Awaitable[dict]]] = {}
 def register_handler(event_type: str, handler: Callable[..., Awaitable[dict]]) -> None:
     """Register an async handler for a Stripe event type."""
     _handler_registry[event_type] = handler
-    logger.debug(f"Registered handler for event type: {event_type}")
+    logger.debug("Registered handler for event type: %s", event_type)
 
 
 async def route_event(event: dict, db: AsyncSession) -> dict:
@@ -31,7 +31,7 @@ async def route_event(event: dict, db: AsyncSession) -> dict:
     handler = _handler_registry.get(event_type)
 
     if handler is None:
-        logger.info(f"No handler registered for event type: {event_type}")
+        logger.info("No handler registered for event type: %s", event_type)
         return {"status": "ignored", "message": f"Unhandled event type: {event_type}"}
 
     return await handler(event, db)
@@ -56,7 +56,7 @@ async def _handle_subscription_created(event: dict, db: AsyncSession) -> dict:
 
     customer = await get_customer_by_stripe_id(db, stripe_customer_id)
     if customer is None:
-        logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+        logger.warning("Customer not found in DB: %s", stripe_customer_id)
         return {"status": "error", "message": "Customer not found"}
 
     email_sent = await send_welcome_email(
@@ -80,7 +80,7 @@ async def _handle_subscription_deleted(event: dict, db: AsyncSession) -> dict:
 
     customer = await get_customer_by_stripe_id(db, stripe_customer_id)
     if customer is None:
-        logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+        logger.warning("Customer not found in DB: %s", stripe_customer_id)
         return {"status": "error", "message": "Customer not found"}
 
     email_sent = await send_cancellation_email(
@@ -104,7 +104,7 @@ async def _handle_payment_failed(event: dict, db: AsyncSession) -> dict:
 
     customer = await get_customer_by_stripe_id(db, stripe_customer_id)
     if customer is None:
-        logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+        logger.warning("Customer not found in DB: %s", stripe_customer_id)
         return {"status": "error", "message": "Customer not found"}
 
     email_sent = await send_payment_failed_email(
@@ -128,7 +128,7 @@ async def _handle_invoice_upcoming(event: dict, db: AsyncSession) -> dict:
 
     customer = await get_customer_by_stripe_id(db, stripe_customer_id)
     if customer is None:
-        logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+        logger.warning("Customer not found in DB: %s", stripe_customer_id)
         return {"status": "error", "message": "Customer not found"}
 
     email_sent = await send_renewal_reminder_email(
@@ -157,7 +157,7 @@ async def _handle_subscription_updated(event: dict, db: AsyncSession) -> dict:
 
     customer = await get_customer_by_stripe_id(db, stripe_customer_id)
     if customer is None:
-        logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+        logger.warning("Customer not found in DB: %s", stripe_customer_id)
         return {"status": "error", "message": "Customer not found"}
 
     data_object = event.get("data", {}).get("object", {})

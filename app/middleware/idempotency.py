@@ -61,9 +61,11 @@ class IdempotencyGuard:
                 "Event ID '%s' does not match expected Stripe format (evt_*), rejecting",
                 event_id,
             )
+            # Truncate reflected value to avoid echoing large attacker-controlled input
+            safe_id = event_id[:80] if isinstance(event_id, str) else str(event_id)[:80]
             return {
                 "status": "rejected",
-                "message": f"Invalid event ID format: {event_id}",
+                "message": f"Invalid event ID format: {safe_id}",
             }
 
         webhook_event = WebhookEvent(

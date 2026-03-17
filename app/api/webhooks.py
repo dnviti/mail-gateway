@@ -4,6 +4,7 @@ from fastapi import APIRouter, Header, HTTPException, Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
+from app.middleware.idempotency import IdempotencyGuard
 from app.models.schemas import WebhookResponse
 from app.services.stripe_service import verify_webhook_signature, extract_customer_data, is_first_subscription
 from app.services.customer_service import get_customer_by_stripe_id
@@ -26,6 +27,12 @@ async def stripe_webhook(
     if event is None:
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
+    # Idempotency check: skip if this event was already processed
+    guard = IdempotencyGuard(db)
+    duplicate = await guard.check_and_record(event)
+    if duplicate is not None:
+        return WebhookResponse(**duplicate)
+
     event_type = event.get("type", "")
 
     if event_type == "customer.subscription.created":
@@ -34,14 +41,17 @@ async def stripe_webhook(
 
         if not stripe_customer_id:
             logger.warning("No customer ID in subscription event")
+            await guard.record_event(event, status="skipped")
             return WebhookResponse(status="ignored", message="No customer ID")
 
         if not await is_first_subscription(stripe_customer_id, event):
+            await guard.record_event(event, status="skipped")
             return WebhookResponse(status="ignored", message="Not a first subscription")
 
         customer = await get_customer_by_stripe_id(db, stripe_customer_id)
         if customer is None:
             logger.warning(f"Customer not found in DB: {stripe_customer_id}")
+            await guard.record_event(event, status="failed")
             return WebhookResponse(status="error", message="Customer not found")
 
         email_sent = await send_welcome_email(
@@ -50,7 +60,11 @@ async def stripe_webhook(
         )
 
         if email_sent:
+            await guard.record_event(event, status="processed")
             return WebhookResponse(status="processed", message="Welcome email sent")
+
+        await guard.record_event(event, status="failed")
         return WebhookResponse(status="error", message="Failed to send email")
 
+    await guard.record_event(event, status="skipped")
     return WebhookResponse(status="ignored", message=f"Unhandled event type: {event_type}")

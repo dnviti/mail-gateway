@@ -14,6 +14,7 @@ async def get_db():
 async def init_db():
     from app.models.customer import Base
     import app.models.dead_letter  # noqa: F401 — register DeadLetter with Base.metadata
+    import app.models.webhook_event  # noqa: F401 — register WebhookEvent table
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

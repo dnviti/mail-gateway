@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_ADMIN: str = "60/minute"
     RATE_LIMIT_WEBHOOK: str = "100/minute"
 
+    # Retention / TTL policy
+    WEBHOOK_EVENTS_TTL_DAYS: int = 30
+    DEAD_LETTER_TTL_DAYS: int = 90
+    RETENTION_CLEANUP_INTERVAL_HOURS: int = 24
+    RETENTION_BATCH_SIZE: int = 1000
+
     @field_validator("RATE_LIMIT_ADMIN", "RATE_LIMIT_WEBHOOK")
     @classmethod
     def validate_rate_limit_format(cls, v: str) -> str:

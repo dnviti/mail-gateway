@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # PII redaction — enabled by default for GDPR compliance.
     # Set to false only in development/debugging environments.
     PII_REDACTION_ENABLED: bool = True
+    # Salt for PII correlation hashes.  Set a unique, secret value per
+    # deployment to prevent rainbow-table reversal of hashed PII.
+    PII_HASH_SALT: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

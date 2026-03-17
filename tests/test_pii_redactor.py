@@ -8,6 +8,7 @@ from app.utils.pii_redactor import (
     DEFAULT_SENSITIVE_FIELDS,
     pii_hash,
     redact_email,
+    redact_error_message,
     redact_name,
     redact_payload,
 )
@@ -67,6 +68,36 @@ class TestRedactName:
 
 
 # ---------------------------------------------------------------------------
+# redact_error_message
+# ---------------------------------------------------------------------------
+
+
+class TestRedactErrorMessage:
+    def test_email_in_error(self):
+        msg = "Delivery failed for user@example.com: mailbox full"
+        assert redact_error_message(msg) == "Delivery failed for u***@example.com: mailbox full"
+
+    def test_multiple_emails_in_error(self):
+        msg = "Rejected: from alice@a.com to bob@b.com"
+        result = redact_error_message(msg)
+        assert "a***@a.com" in result
+        assert "b***@b.com" in result
+
+    def test_no_email_in_error(self):
+        msg = "Connection timed out after 30s"
+        assert redact_error_message(msg) == msg
+
+    def test_empty_string(self):
+        assert redact_error_message("") == ""
+
+    def test_disabled(self):
+        with patch("app.utils.pii_redactor.settings") as mock_settings:
+            mock_settings.PII_REDACTION_ENABLED = False
+            msg = "Failed for user@example.com"
+            assert redact_error_message(msg) == msg
+
+
+# ---------------------------------------------------------------------------
 # pii_hash
 # ---------------------------------------------------------------------------
 
@@ -83,6 +114,14 @@ class TestPiiHash:
     def test_hex_string(self):
         result = pii_hash("test")
         assert len(result) == 64  # SHA-256 hex digest length
+
+    def test_salted_hash_differs(self):
+        unsalted = pii_hash("test@example.com")
+        with patch("app.utils.pii_redactor.settings") as mock_settings:
+            mock_settings.PII_HASH_SALT = "my-secret-salt"
+            mock_settings.PII_REDACTION_ENABLED = True
+            salted = pii_hash("test@example.com")
+        assert unsalted != salted
 
 
 # ---------------------------------------------------------------------------

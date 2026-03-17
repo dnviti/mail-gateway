@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import re
 from typing import Any
 
 from app.config import settings
@@ -35,6 +36,9 @@ DEFAULT_SENSITIVE_FIELDS: frozenset[str] = frozenset(
 )
 
 _REDACTED = "[REDACTED]"
+
+# Regex to find email-like patterns in free-text strings (e.g. error messages).
+_EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 
 
 # ---------------------------------------------------------------------------
@@ -92,9 +96,30 @@ def redact_name(name: str) -> str:
     return " ".join(masked_parts)
 
 
+def redact_error_message(message: str) -> str:
+    """Scrub email addresses from free-text error messages.
+
+    API error responses may echo back recipient addresses.  This function
+    replaces any email-shaped substring with its redacted form so the
+    message can be safely persisted or logged.
+    """
+    if not settings.PII_REDACTION_ENABLED:
+        return message
+
+    if not message:
+        return message
+
+    return _EMAIL_PATTERN.sub(lambda m: redact_email(m.group()), message)
+
+
 def pii_hash(value: str) -> str:
-    """Return a SHA-256 hex digest of *value* for correlation without exposing PII."""
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+    """Return a salted SHA-256 hex digest of *value* for correlation without exposing PII.
+
+    Uses ``PII_HASH_SALT`` from settings when available to prevent
+    rainbow-table reversal of low-entropy inputs like email addresses.
+    """
+    salted = f"{settings.PII_HASH_SALT}{value}"
+    return hashlib.sha256(salted.encode("utf-8")).hexdigest()
 
 
 def redact_payload(

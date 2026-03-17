@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,12 @@ class IdempotencyGuard:
     Uses the webhook_events table to track processed event IDs. Handles
     concurrent duplicate deliveries safely via unique constraint on
     stripe_event_id.
+
+    The guard uses an atomic INSERT approach: it inserts a row with status
+    'pending' when an event is first seen. If a concurrent request tries
+    to insert the same event_id, the unique constraint raises an
+    IntegrityError, which is caught and treated as a duplicate. This
+    eliminates the race window that exists in a SELECT-then-INSERT pattern.
     """
 
     def __init__(self, db: AsyncSession):
@@ -24,7 +30,12 @@ class IdempotencyGuard:
     async def check_and_record(
         self, event: dict[str, Any]
     ) -> dict[str, Any] | None:
-        """Check if an event has already been processed and record it if not.
+        """Atomically claim an event for processing.
+
+        Attempts to INSERT a 'pending' row for the event. If the insert
+        succeeds, the caller owns the event and should process it. If it
+        fails due to a unique constraint violation, the event was already
+        claimed by another request.
 
         Args:
             event: The parsed Stripe event dictionary.
@@ -41,16 +52,21 @@ class IdempotencyGuard:
             logger.warning("Webhook event missing 'id' field, skipping idempotency check")
             return None
 
-        stmt = select(WebhookEvent).where(WebhookEvent.stripe_event_id == event_id)
-        result = await self.db.execute(stmt)
-        existing = result.scalar_one_or_none()
+        webhook_event = WebhookEvent(
+            stripe_event_id=event_id,
+            event_type=event_type,
+            status="pending",
+        )
 
-        if existing is not None:
+        try:
+            self.db.add(webhook_event)
+            await self.db.flush()
+        except IntegrityError:
+            await self.db.rollback()
             logger.info(
-                "Duplicate webhook event %s (type=%s, status=%s), skipping",
+                "Duplicate webhook event %s (type=%s), skipping",
                 event_id,
                 event_type,
-                existing.status,
             )
             return {
                 "status": "skipped",
@@ -62,30 +78,30 @@ class IdempotencyGuard:
     async def record_event(
         self, event: dict[str, Any], status: str = "processed"
     ) -> None:
-        """Record a webhook event as processed.
+        """Update the status of a previously claimed event.
+
+        Called after processing to set the final status (processed/skipped/failed).
 
         Args:
             event: The parsed Stripe event dictionary.
             status: The processing status (processed/skipped/failed).
         """
         event_id = event.get("id")
-        event_type = event.get("type", "unknown")
 
         if not event_id:
             return
 
-        webhook_event = WebhookEvent(
-            stripe_event_id=event_id,
-            event_type=event_type,
-            status=status,
+        stmt = (
+            update(WebhookEvent)
+            .where(WebhookEvent.stripe_event_id == event_id)
+            .values(status=status)
         )
 
         try:
-            self.db.add(webhook_event)
+            await self.db.execute(stmt)
             await self.db.commit()
-        except IntegrityError:
-            # Another concurrent request already recorded this event
+        except Exception:
             await self.db.rollback()
-            logger.info(
-                "Event %s was concurrently recorded by another request", event_id
+            logger.exception(
+                "Failed to update status for event %s", event_id
             )

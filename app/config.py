@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     # When not set, the sender email is derived as noreply@{APP_NAME}.com.
     SENDER_EMAIL: str = ""
 
+    # Retention / TTL policy
+    WEBHOOK_EVENTS_TTL_DAYS: int = 30
+    DEAD_LETTER_TTL_DAYS: int = 90
+    RETENTION_CLEANUP_INTERVAL_HOURS: int = 24
+    RETENTION_BATCH_SIZE: int = 1000
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @property

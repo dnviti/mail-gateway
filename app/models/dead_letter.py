@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, JSON, String, Text, func
+from sqlalchemy import DateTime, Index, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.customer import Base
@@ -21,4 +21,8 @@ class DeadLetter(Base):
     last_failed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    status: Mapped[str] = mapped_column(String(50), default="pending")
+    status: Mapped[str] = mapped_column(String(50), default="pending", index=True)
+
+    __table_args__ = (
+        Index("ix_dead_letter_emails_recipient", "recipient_email"),
+    )

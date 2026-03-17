@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import httpx
@@ -153,12 +153,18 @@ async def with_retry(
                 )
 
     # Permanent failure — record to dead letter table
+    actual_attempts = attempt + 1 if last_exception is not None else 1
+    error_msg = str(last_exception) if last_exception else "Unknown error"
+    # Truncate error message to avoid storing excessive internal details (S-1)
+    if len(error_msg) > 1000:
+        error_msg = error_msg[:1000] + "... [truncated]"
+
     await _record_dead_letter(
         recipient_email=recipient_email,
         template_id=template_id,
         payload=payload,
-        error_message=str(last_exception),
-        attempts=(config.max_retries + 1) if first_failed_at else 1,
+        error_message=error_msg,
+        attempts=actual_attempts,
         first_failed_at=first_failed_at or datetime.now(timezone.utc),
     )
     return False
